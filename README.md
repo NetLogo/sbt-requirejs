@@ -2,7 +2,7 @@
 
 This plugin provides a simple means of utilizing the RequireJS optimizer from within SBT.
 
-Currently, the plugin targets **SBT 0.13**.
+Currently, this plugin targets **SBT 0.13**.
 
 ## Building
 
@@ -10,7 +10,19 @@ Simply run the `package` SBT command to build a new version of the plugin `.jar`
 
 ## Usage
 
-Coming soon.
+When the plugin is included in your build, the `RequireJS` object comes into scope.  Inside that object are the following:
+
+  # Tasks
+
+  * `runRequireJS`/`run-require-js`: Runs the optimizer
+  * `cleanRequireJS/`clean-require-js`: Deletes the output file, if it exists
+
+  # Settings
+
+  * `projectDir`: The *File* that represents the directory that is the root of your RequireJS project
+  * `outFile`: The *File* that represents where you want the RequireJS output file to go
+  * `shim`: The *Option[String]* of a path relative to `projectDir` of what RequireJS config file to use
+  * `optimize`: A *Boolean* value that signifies whether or not you want your code run through an optimizer/minifier.
 
 ## Terms of Use
 
