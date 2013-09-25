@@ -1,0 +1,12 @@
+-Updated build from SBT 0.11.3 to SBT 0.13.0
+-Removed dependency on the Jerkson project
+-Updated the project to build against a Scala 2.10.x version
+-Updated the 'r.js' resource version to 2.1.8 (from version 2.0.2)
+-Deleted 'package.scala' in the 'com.gu' package, as it was no longer necessary.
+-Drastically reworked 'RequireJsOptimizer.scala' and 'RequireJS.scala'
+--Changed the build keys to exist within the 'RequireJS' object
+--Reworked the whole system (removed SBT keys, methods) to put lot less stress on command line argument and a lot more stress on RequireJS config files
+--Also changed the system to prefer single, coalesced RequireJS output files, rather than outputting whole directories of processed code
+--Added the `clean-require-js` SBT task
+--Removed the RequireJS file cache and the use of temporary directories for storing intermediate RequireJS files
+--Substantially trimmed down the `RequireJsConfig` class
