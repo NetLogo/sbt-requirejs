@@ -2,19 +2,11 @@ package com.gu
 
 import sbt._
 import io.Source
-import org.mozilla.javascript.tools.shell.{Global, ShellContextFactory, Main}
-import com.codahale.jerkson.Json._
+import org.mozilla.javascript.tools.shell.{ Global, ShellContextFactory, Main => Rhino }
 import java.util
 
-case class Module(name: String)
-
-case class RequireJsConfig(baseUrl: String,
-                           appDir: String,
-                           dir: String,
-                           paths: Map[String, String],
-                           modules: Seq[Module],
-                           // to turn off optimization use optimize=Some("none")    - yeah, I know
-                           optimize: Option[String])
+// to turn off optimization use optimize=Some("none") - yeah, I know
+case class RequireJsConfig(out: File, mainConfig: Option[File], optimize: Option[String])
 
 object RequireJsOptimizer {
 
@@ -27,22 +19,27 @@ object RequireJsOptimizer {
     rjsFile
   }
 
-  def optimize(config: RequireJsConfig)(implicit log: Logger) = {
-    time{
-      val configFile = IO.createTemporaryDirectory / "config.js"
-      val configString = generate(config)
+  def optimize(config: RequireJsConfig, baseDir: File)(implicit log: Logger): Unit =
+    time {
 
-      log.info("Running requirejs optimization with config: " + configString)
+      val relativeOut = config.out.relativeTo(baseDir) getOrElse (throw new IllegalArgumentException("Output location must be within project base directory."))
 
-      IO.write(configFile, configString)
+      val outArr        = Array(s"out=$relativeOut")
+      val optimizeArr   = config.optimize.toArray map (x => s"optimize=$x")
+      val configFileArr = config.mainConfig.toArray map (_.getAbsolutePath)
+
+      log.info("Running requirejs optimization with config file at " + (configFileArr.headOption getOrElse "<none>"))
 
       //if we do not do this then the script is not executed again
       //I found this out by trial and error
-      Main.shellContextFactory = new ShellContextFactory()
-      Main.global = new Global()
+      Rhino.shellContextFactory = new ShellContextFactory()
+      Rhino.global = new Global()
       clearFileList()
 
-      val result = Main.exec(Array(rjsFile.getAbsolutePath, "-o", configFile.getAbsolutePath))
+      val args = Array(rjsFile.getAbsolutePath, "-o") ++ configFileArr ++ outArr ++ optimizeArr
+      log.info(s"""Running Rhino command: ${args.mkString(" ")}""")
+
+      val result = Rhino.exec(args)
 
       //have not actually been able to get this to return anything other than 0
       //even when I know there are errors.
@@ -50,18 +47,12 @@ object RequireJsOptimizer {
         System.exit(result)
       }
 
-      val allJsFiles = (file(config.appDir) ** "*.js").get
-      val destination = file(config.dir)
-      val optimizedFiles = (allJsFiles x rebase(file(config.appDir), destination)) map (_._2)
-      optimizedFiles
     }
-  }
-
 
   private def clearFileList() {
     //due to the way we are calling this, it adds a null to the list each time.
     //this is the only way I found to clear the list
-    val fileList = classOf[Main].getDeclaredField("fileList")
+    val fileList = classOf[Rhino].getDeclaredField("fileList")
     fileList.setAccessible(true)
     fileList.set(null, new util.ArrayList[String]())
   }
@@ -72,4 +63,5 @@ object RequireJsOptimizer {
     log.info("RequireJs optimization took " + (System.currentTimeMillis() - start) + " ms")
     result
   }
+
 }

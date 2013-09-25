@@ -4,107 +4,52 @@ import java.io.File
 import sbt._
 import sbt.Keys._
 
-object RequireJS extends Plugin {
+object Plugin extends Plugin {
 
-  val requireJsAppDir = SettingKey[File]("require-js-app-dir", "The location of the javascript you want to optimize")
-  val requireJsDir = SettingKey[File]("require-js-dir", "The location you want the javascript optimized to")
-  val requireJsBaseUrl = SettingKey[String]("require-js-base-url", "The base url of requireJs modules")
-  val requireJsOptimize = SettingKey[Boolean]("require-js-optimize", "Let requireJs know whether to optimize files or not")
+  object RequireJS {
 
-  val requireJsModules = SettingKey[Seq[String]]("require-js-modules", "The requireJs entry modules (usually main - for main.js)")
-  val requireJsPaths = SettingKey[Map[String, String]]("require-js-paths", "The requireJS paths mapping (Eg, 'bonzo' -> 'vendor/bonzo-v1.0.1'")
+    val runRequireJS   = TaskKey[Seq[File]]("require-js",  "Run the RequireJS optimizer")
+    val cleanRequireJS = TaskKey[Unit]("clean-require-js", "Clean the RequireJS output directories")
 
-  val requireJsCacheDir = SettingKey[File]("require-js-cache-dir", "location to cache require js files to see if they have changed")
+    val projectDir = SettingKey[File](          "require-js-project-dir",  "The location of the javascript you want to optimize")
+    val outFile    = SettingKey[File](          "require-js-out",          "The combined output file")
+    val shim       = SettingKey[Option[String]]("require-js-shim",         "The path to the shim/config file for RequireJS to use (relative to the project dir)")
+    val optimize   = SettingKey[Boolean](       "require-js-optimize",     "Whether or not to optimize files or not")
 
-  override lazy val settings = Seq(
-    requireJsCacheDir <<= (target) { tar =>
-      tar / "sbt-requirejs-cache"
-    }
-  )
+    val settings = Seq(
+      runRequireJS   <<= compiler,
+      cleanRequireJS <<= cleanUp,
+      optimize        := true
+    )
 
-  def requireJsCompiler = (requireJsOptimize, requireJsAppDir, requireJsDir, requireJsBaseUrl, requireJsPaths, requireJsModules, streams, requireJsCacheDir) map {
-    (optimize, appDir, dir, baseUrl, paths, modules, s, cacheDir) =>
-      implicit val log = s.log
+    def cleanUp = (outFile).map[Unit]{ _.delete() }
 
-      //we cannot write directly to resources dir as the optimizer deletes everything in there
-      //and not only these files are in there
-      val tmpDir = IO.createTemporaryDirectory
+    def compiler = (optimize, projectDir, outFile, shim, streams, baseDirectory) map {
+      (optimize, projectDir, out, shim, s, baseDir) =>
 
-      tmpDir.deleteOnExit()
+        implicit val log = s.log
 
-      val optimizeOpt = if (optimize) None else Some("none")
+        val optimizeOpt = if (optimize) None else Some("none")
+        val config      = RequireJsConfig(out, shim map (s => (projectDir / s)), optimizeOpt)
 
-      if (!cacheDir.exists) {
-        cacheDir.mkdirs
-        cacheDir.mkdir
-      }
-
-      val sourceFileDetails: Map[String, Long] = fileDetails(appDir)
-
-      val cacheFileDetails: Map[String, Long] = fileDetails(cacheDir)
-
-
-      val config = RequireJsConfig(baseUrl, appDir.getAbsolutePath,
-        tmpDir.getAbsolutePath, paths, modules.map(Module(_)), optimizeOpt)
-
-      if (canSkipCompile(sourceFileDetails, cacheFileDetails)) {
-        log.info("Skipping javascript file optimization")
-
-        //we still need to return the list of expected files for SBT to work
-        sourceFileDetails.map{ case (path, _) => (dir / path)}.toSeq
-
-      } else {
-        log.info("Optimizing javascript files")
-
-        //clear out both destination directories before we start
-        clearCachedFiles(cacheDir, dir)
-
-        val optimizedFiles = RequireJsOptimizer.optimize(config)
-
-        //copy files to resources dir
-        IO.copyDirectory(tmpDir, dir, overwrite = true, preserveLastModified = false)
-
-        //copy files to cache dir so we can check against them later for changes
-        IO.copyDirectory(appDir, cacheDir, preserveLastModified = false)
-
-
-        optimizedFiles.flatMap(_.rebase(tmpDir, dir))
-      }
-  }
-
-
-  private def clearCachedFiles(cacheDir: Types.Id[File], dir: Types.Id[File]) {
-    (cacheDir ** "**").get.foreach {
-      fileInCacheDir =>
-        fileInCacheDir.relativeTo(cacheDir).foreach {
-          path =>
-            (dir / path.getPath).delete()
+        if (needsRecompile(projectDir, out)) {
+          log.info("Optimizing javascript files")
+          out.delete()
+          RequireJsOptimizer.optimize(config, baseDir)
+        } else {
+          log.info("Skipping javascript file optimization")
         }
-        fileInCacheDir.delete
-    }
-  }
 
-  private def fileDetails(dir: File) = {
-      (dir ** "**").get.filterNot(_.isDirectory).filter(_.getName.matches(".*\\.js$")).map{f =>
-        f.absolutePath.replace(dir.getAbsolutePath, "") -> f.lastModified
-      }.toMap
-  }
+        Seq(out)
 
-  private def canSkipCompile(sourceFileDetails: Map[String, Long], cacheFileDetails: Map[String, Long]): Boolean = {
-    val sourceKeys = sourceFileDetails.keySet
-    val cachedKeys = cacheFileDetails.keySet
-
-    val sameNumberOfFiles = cacheFileDetails.size == sourceFileDetails.size
-
-    val sameFileNames = cachedKeys.forall(sourceKeys contains)
-
-    val cachedFilesNewerThanSourceFiles = cacheFileDetails.forall {
-      case (fileName, cacheFileModified) => sourceFileDetails(fileName) < cacheFileModified
     }
 
-    sameNumberOfFiles && sameFileNames && cachedFilesNewerThanSourceFiles
+    private def needsRecompile(projectRoot: File, out: File): Boolean = {
+      val jsFiles = (projectRoot ** "*.js").get
+      jsFiles exists (file => file.isFile && (file newerThan out))
+    }
+
   }
+
 }
-
-
 
