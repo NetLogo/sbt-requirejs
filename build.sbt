@@ -1,3 +1,5 @@
+version := "1.0"
+
 sbtPlugin := true
 
 scalaVersion in ThisBuild := "2.10.2"
