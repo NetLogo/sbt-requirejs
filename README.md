@@ -10,7 +10,7 @@ Simply run the `package` SBT command to build a new version of the plugin `.jar`
 
 ## Usage
 
-For an example usage of this plugin, please see the [Web extension](https://github.com/NetLogo/Web-Extension/)'s [`plugins.sbt`](https://github.com/NetLogo/Web-Extension/blob/master/project/plugins.sbt) and [`build.sbt`](https://github.com/NetLogo/Web-Extension/blob/master/build.sbt).
+Coming soon.
 
 ## Terms of Use
 
