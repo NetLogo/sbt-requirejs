@@ -10,3 +10,5 @@
 --Added the `clean-require-js` SBT task
 --Removed the RequireJS file cache and the use of temporary directories for storing intermediate RequireJS files
 --Substantially trimmed down the `RequireJsConfig` class
+-Added 'LICENSE.txt'
+-Added 'README.md'
