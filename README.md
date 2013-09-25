@@ -23,6 +23,7 @@ When the plugin is included in your build, the `RequireJS` object comes into sco
   * `outFile`: The **File** that represents where you want the RequireJS output file to go
   * `shim`: The **Option[String]** of a path relative to `projectDir` of what RequireJS config file to use
   * `optimize`: The **Boolean** value that signifies whether or not you want your code run through an optimizer/minifier
+    * If unspecified, this defaults to `true`
 
 ## Terms of Use
 
