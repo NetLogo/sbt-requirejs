@@ -14,4 +14,4 @@ Coming soon.
 
 ## Terms of Use
 
-This code is released under the Apache 2 license, courtesy of The Guardian.
+This code is released under the Apache 2 license, courtesy of The Guardian.  Please see [LICENSE.txt](LICENSE.txt) for further details.
