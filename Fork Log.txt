@@ -12,3 +12,4 @@
 --Substantially trimmed down the `RequireJsConfig` class
 -Added 'LICENSE.txt'
 -Added 'README.md'
+-To avoid being impostors, changed the organization and package names to 'org.nlogo'

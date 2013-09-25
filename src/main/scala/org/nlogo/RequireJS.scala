@@ -1,4 +1,4 @@
-package com.gu
+package org.nlogo
 
 import java.io.File
 import sbt._

@@ -1,4 +1,4 @@
-package com.gu
+package org.nlogo
 
 import sbt._
 import io.Source
