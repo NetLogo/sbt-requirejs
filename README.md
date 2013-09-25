@@ -12,17 +12,17 @@ Simply run the `package` SBT command to build a new version of the plugin `.jar`
 
 When the plugin is included in your build, the `RequireJS` object comes into scope.  Inside that object are the following:
 
-  # Tasks
+<u><b>Tasks</b></u>
 
   * `runRequireJS`/`run-require-js`: Runs the optimizer
-  * `cleanRequireJS/`clean-require-js`: Deletes the output file, if it exists
+  * `cleanRequireJS`/`clean-require-js`: Deletes the output file, if it exists
 
-  # Settings
+<br><u><b>Settings</b></u>
 
-  * `projectDir`: The *File* that represents the directory that is the root of your RequireJS project
-  * `outFile`: The *File* that represents where you want the RequireJS output file to go
-  * `shim`: The *Option[String]* of a path relative to `projectDir` of what RequireJS config file to use
-  * `optimize`: A *Boolean* value that signifies whether or not you want your code run through an optimizer/minifier.
+  * `projectDir`: The **File** that represents the directory that is the root of your RequireJS project
+  * `outFile`: The **File** that represents where you want the RequireJS output file to go
+  * `shim`: The **Option[String]** of a path relative to `projectDir` of what RequireJS config file to use
+  * `optimize`: The **Boolean** value that signifies whether or not you want your code run through an optimizer/minifier
 
 ## Terms of Use
 
